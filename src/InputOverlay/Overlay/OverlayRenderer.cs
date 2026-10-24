@@ -21,11 +21,11 @@ internal sealed class OverlayRenderer : IDisposable
     internal static readonly Cap[] Keys = CreateKeys();
     private static readonly Cap[] Mouse =
     [
-        new(InputCodes.MouseLeft, "L", new(288, 84, 27, 42)),
-        new(InputCodes.MouseRight, "R", new(334, 84, 27, 42)),
-        new(InputCodes.MouseMiddle, "", new(318, 94, 13, 25)),
-        new(InputCodes.MouseBack, "4", new(271, 156, 12, 26)),
-        new(InputCodes.MouseForward, "5", new(271, 124, 12, 26))
+        new(InputCodes.MouseLeft, "L", new(295, 88, 23, 48)),
+        new(InputCodes.MouseRight, "R", new(332, 91, 23, 49)),
+        new(InputCodes.MouseMiddle, "", new(319, 96, 11, 25)),
+        new(InputCodes.MouseBack, "4", new(291, 144, 10, 23)),
+        new(InputCodes.MouseForward, "5", new(291, 116, 10, 23))
     ];
 
     public OverlayRenderer(LayeredSurface surface, float scale)
@@ -37,12 +37,18 @@ internal sealed class OverlayRenderer : IDisposable
         graphics.Clear(Color.Transparent);
         Configure(graphics);
         foreach (Cap key in Keys) DrawCap(graphics, key, false);
-        using GraphicsPath body = Rounded(new RectangleF(284, 76, 81, 136), 35);
-        using var fill = new SolidBrush(Color.FromArgb(135, 17, 23, 29));
-        using var outline = new Pen(Color.FromArgb(190, 111, 127, 140), 1);
+        using GraphicsPath body = MouseBody();
+        using var fill = new LinearGradientBrush(new RectangleF(282, 76, 86, 140),
+            Color.FromArgb(180, 28, 37, 45), Color.FromArgb(155, 15, 21, 27), LinearGradientMode.Vertical);
+        using var outline = new Pen(Color.FromArgb(200, 111, 127, 140), 1);
         graphics.FillPath(fill, body);
         graphics.DrawPath(outline, body);
-        foreach (Cap button in Mouse) DrawCap(graphics, button, false);
+        using var seam = new GraphicsPath();
+        seam.AddBezier(303, 142, 318, 143, 336, 147, 352, 145);
+        using var seamPen = new Pen(Color.FromArgb(85, 108, 123, 136), 0.8f);
+        graphics.DrawPath(seamPen, seam);
+        foreach (Cap button in Mouse)
+            if (!IsSideButton(button.Code)) DrawCap(graphics, button, false);
         DrawScroll(graphics, true, false);
         DrawScroll(graphics, false, false);
     }
@@ -93,7 +99,10 @@ internal sealed class OverlayRenderer : IDisposable
         foreach (Cap key in Keys)
             if (snapshot.IsDown(key.Code)) DrawCap(graphics, key, true);
         foreach (Cap button in Mouse)
-            if (snapshot.IsDown(button.Code)) DrawCap(graphics, button, true);
+            if (!IsSideButton(button.Code) && snapshot.IsDown(button.Code)) DrawCap(graphics, button, true);
+        // Keep the entire matched pair in the same foreground layer, including released buttons.
+        foreach (Cap button in Mouse)
+            if (IsSideButton(button.Code)) DrawCap(graphics, button, snapshot.IsDown(button.Code));
         if (snapshot.ScrollUpAt(now)) DrawScroll(graphics, true, true);
         if (snapshot.ScrollDownAt(now)) DrawScroll(graphics, false, true);
         TimerVisual timer = snapshot.TimerAt(now);
@@ -106,11 +115,15 @@ internal sealed class OverlayRenderer : IDisposable
 
     private void DrawCap(Graphics graphics, Cap cap, bool pressed)
     {
-        using GraphicsPath path = Rounded(cap.Bounds, Math.Min(5, cap.Bounds.Width / 3));
+        using GraphicsPath path = CapShape(cap);
         using var fill = new SolidBrush(pressed ? Accent : Color.FromArgb(185, 23, 29, 35));
         using var border = new Pen(pressed ? Color.FromArgb(255, 139, 242, 250) : Color.FromArgb(200, 108, 123, 136), 1);
         using var text = new SolidBrush(pressed ? Color.FromArgb(255, 8, 30, 35) : Color.FromArgb(245, 224, 233, 239));
+        CompositingMode compositing = graphics.CompositingMode;
+        // Erase the shell beneath a side button so its outline cannot show through the face.
+        if (IsSideButton(cap.Code)) graphics.CompositingMode = CompositingMode.SourceCopy;
         graphics.FillPath(fill, path);
+        graphics.CompositingMode = compositing;
         graphics.DrawPath(border, path);
         if (cap.Label.Length != 0) graphics.DrawString(cap.Label, _label, text, cap.Bounds, _center);
         if (cap.Code == InputCodes.MouseMiddle)
@@ -119,6 +132,72 @@ internal sealed class OverlayRenderer : IDisposable
             for (int i = 1; i <= 3; i++) graphics.DrawLine(rib, cap.Bounds.Left + 3, cap.Bounds.Top + i * 6,
                 cap.Bounds.Right - 3, cap.Bounds.Top + i * 6);
         }
+    }
+
+    private static GraphicsPath MouseBody()
+    {
+        // The left thumb recess is deeper than the right flank; the right palm bulge
+        // sits higher, and the heel curls back left of the button axis.
+        var path = new GraphicsPath();
+        path.AddBeziers([
+            new PointF(324.5f, 76),
+            new(312, 76), new(299, 80), new(294, 88),
+            new(291, 94), new(291.5f, 107), new(293, 118),
+            new(294.5f, 129), new(298, 135), new(298, 145),
+            new(298, 155), new(291, 165), new(288, 177),
+            new(285, 189), new(289, 202), new(298, 209),
+            new(304, 214), new(314, 216), new(322, 216),
+            new(332, 216), new(342, 211), new(349, 201),
+            new(357, 190), new(362, 175), new(361, 157),
+            new(360, 139), new(359, 117), new(358, 100),
+            new(357.5f, 92), new(354, 85), new(349, 82),
+            new(342, 77), new(333, 76), new(324.5f, 76)
+        ]);
+        path.CloseFigure();
+        return path;
+    }
+
+    private static bool IsSideButton(int code) => code is InputCodes.MouseBack or InputCodes.MouseForward;
+
+    private static GraphicsPath CapShape(Cap cap)
+    {
+        if (cap.Code is InputCodes.MouseLeft or InputCodes.MouseRight)
+        {
+            var button = new GraphicsPath();
+            if (cap.Code == InputCodes.MouseLeft)
+            {
+                button.AddBeziers([
+                    new PointF(320, 79),
+                    new(309, 79), new(300, 83), new(296, 91),
+                    new(292, 98), new(294, 111), new(296, 122),
+                    new(298, 130), new(299, 135), new(303, 137),
+                    new(309, 139), new(315, 139), new(320, 139)
+                ]);
+                button.AddLine(320, 139, 320, 124);
+                button.AddBezier(320, 124, 318, 124, 317, 122, 317, 118);
+                button.AddLine(317, 118, 317, 97);
+                button.AddBezier(317, 97, 317, 94, 318, 92, 320, 92);
+            }
+            else
+            {
+                button.AddBeziers([
+                    new PointF(329, 80),
+                    new(341, 80), new(351, 86), new(354, 95),
+                    new(358, 103), new(356, 116), new(355, 126),
+                    new(355, 133), new(355, 138), new(352, 141),
+                    new(345, 143), new(337, 143), new(330, 142)
+                ]);
+                button.AddLine(330, 142, 329, 124);
+                button.AddBezier(329, 124, 331, 124, 332, 122, 332, 118);
+                button.AddLine(332, 118, 332, 97);
+                button.AddBezier(332, 97, 332, 94, 331, 92, 329, 92);
+            }
+            button.CloseFigure();
+            return button;
+        }
+
+        return Rounded(cap.Bounds, cap.Code == InputCodes.MouseMiddle || IsSideButton(cap.Code)
+            ? cap.Bounds.Width / 2 : Math.Min(5, cap.Bounds.Width / 3));
     }
 
     private static void DrawScroll(Graphics graphics, bool up, bool active)
