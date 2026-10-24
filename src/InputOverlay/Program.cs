@@ -32,11 +32,10 @@ internal static class Program
             using (var capture = new RawInputCapture(store, diagnostics, Failed))
             {
                 Console.WriteLine("InputOverlay running. Use a windowed or borderless game.");
-                Console.WriteLine("Commands: show, hide, stats, help, quit. Ctrl+C exits.");
+                Console.WriteLine("Numpad 0: hide/show. Ctrl+C exits.");
                 Console.CancelKeyPress += Cancel;
                 try
                 {
-                    _ = Task.Run(() => ReadCommands(window, diagnostics));
                     Application.Run(window);
                 }
                 finally { Console.CancelKeyPress -= Cancel; }
@@ -55,27 +54,5 @@ internal static class Program
             Console.Error.WriteLine($"InputOverlay failed: {exception.GetBaseException().Message}");
             return 1;
         }
-    }
-
-    private static void ReadCommands(OverlayWindow window, Diagnostics diagnostics)
-    {
-        try
-        {
-            string? command;
-            while ((command = Console.ReadLine()) is not null)
-            {
-                switch (command.Trim().ToLowerInvariant())
-                {
-                    case "show": window.RequestShow(true); break;
-                    case "hide": window.RequestShow(false); break;
-                    case "stats": Console.WriteLine(diagnostics); break;
-                    case "quit" or "exit": window.RequestExit(); return;
-                    case "help": Console.WriteLine(Options.Usage); break;
-                    case "": break;
-                    default: Console.WriteLine("Unknown command. Commands: show, hide, stats, help, quit."); break;
-                }
-            }
-        }
-        catch (IOException) { /* The console may close while a read is pending. */ }
     }
 }

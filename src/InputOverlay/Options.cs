@@ -50,6 +50,6 @@ internal sealed record Options(int? Monitor = null, float Scale = 1, int BottomM
           --bottom-margin N  Distance from screen bottom in DIP, 0 to 1000 (default: 24)
           --help, -h         Show this help
 
-        Console commands: show, hide, stats, help, quit. Ctrl+C also exits.
+        Numpad 0: hide/show. Ctrl+C exits.
         """;
 }

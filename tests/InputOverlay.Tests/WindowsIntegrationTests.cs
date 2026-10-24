@@ -92,10 +92,27 @@ public sealed class WindowsIntegrationTests(ITestOutputHelper output)
             Assert.Equal(underlying, hit);
             Assert.InRange(Math.Abs(overlay.Left + overlay.Width / 2 - (screen.Left + screen.Width / 2)), 0, 1);
             Assert.True(overlay.Bottom <= screen.Bottom);
-            overlay.RequestShow(false);
+            // The top-row 0 and dedicated Insert key must not toggle the overlay.
+            store.Keyboard(1, 0x0b, 0, Stopwatch.GetTimestamp());
+            store.Keyboard(1, 0x0b, 1, Stopwatch.GetTimestamp());
+            store.Keyboard(1, 0x52, 2, Stopwatch.GetTimestamp());
+            store.Keyboard(1, 0x52, 3, Stopwatch.GetTimestamp());
+            PumpFor(25);
+            Assert.True(overlay.Visible);
+            // Numpad 0 uses the same physical scan code with Num Lock on or off.
+            store.Keyboard(1, 0x52, 0, Stopwatch.GetTimestamp());
             PumpUntil(() => !overlay.Visible);
-            overlay.RequestShow(true);
-            PumpUntil(() => overlay.Visible);
+            for (int index = 0; index < 20; index++)
+                store.Keyboard(1, 0x52, 0, Stopwatch.GetTimestamp());
+            PumpFor(25);
+            Assert.False(overlay.Visible);
+            store.Keyboard(1, 0x52, 1, Stopwatch.GetTimestamp());
+            PumpFor(25);
+            Assert.False(overlay.Visible);
+            long frames = diagnostics.FrameCount;
+            store.Keyboard(1, 0x52, 0, Stopwatch.GetTimestamp());
+            PumpUntil(() => overlay.Visible && diagnostics.FrameCount > frames);
+            store.Keyboard(1, 0x52, 1, Stopwatch.GetTimestamp());
             Assert.Equal(foreground, GetForegroundWindow());
             Assert.Null(failure);
             overlay.Close();

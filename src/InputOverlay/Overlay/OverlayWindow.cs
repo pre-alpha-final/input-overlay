@@ -7,7 +7,7 @@ namespace InputOverlay.Overlay;
 
 internal sealed class OverlayWindow : Form
 {
-    private const int RenderMessage = 0x8001, ShowMessage = 0x8002, HideMessage = 0x8003;
+    private const int RenderMessage = 0x8001, ToggleVisibilityMessage = 0x8002;
     private readonly Options _options;
     private readonly InputStore _store;
     private readonly Diagnostics _diagnostics;
@@ -39,6 +39,7 @@ internal sealed class OverlayWindow : Form
         {
             _clock = new AnimationClock(RequestRender, failed);
             _store.Changed += RequestRender;
+            _store.ToggleVisibilityRequested += RequestToggleVisibility;
             _ = Handle;
             if (_initializationError != null) throw new InvalidOperationException("Could not initialize overlay.", _initializationError);
             _initialized = true;
@@ -131,8 +132,8 @@ internal sealed class OverlayWindow : Form
         if (!Native.PostMessage(handle, RenderMessage, 0, 0)) Interlocked.Exchange(ref _renderQueued, 0);
     }
 
-    public void RequestShow(bool visible) => Native.PostMessage(Volatile.Read(ref _windowHandle),
-        visible ? ShowMessage : HideMessage, 0, 0);
+    private void RequestToggleVisibility() => Native.PostMessage(Volatile.Read(ref _windowHandle),
+        ToggleVisibilityMessage, 0, 0);
     public void RequestExit() => Native.PostMessage(Volatile.Read(ref _windowHandle), Native.WmClose, 0, 0);
 
     private void RenderFrame()
@@ -154,15 +155,19 @@ internal sealed class OverlayWindow : Form
             switch (message.Msg)
             {
                 case RenderMessage: RenderFrame(); return;
-                case ShowMessage:
-                    Volatile.Write(ref _visible, 1);
-                    Show();
-                    RequestRender();
-                    return;
-                case HideMessage:
-                    Volatile.Write(ref _visible, 0);
-                    _clock?.SetActive(false, _refreshRate);
-                    Hide();
+                case ToggleVisibilityMessage:
+                    bool visible = Volatile.Read(ref _visible) == 0;
+                    Volatile.Write(ref _visible, visible ? 1 : 0);
+                    if (visible)
+                    {
+                        Show();
+                        RequestRender();
+                    }
+                    else
+                    {
+                        _clock?.SetActive(false, _refreshRate);
+                        Hide();
+                    }
                     return;
                 case Native.WmDisplayChange:
                     ConfigureDisplay();
@@ -197,6 +202,7 @@ internal sealed class OverlayWindow : Form
         {
             _resourcesDisposed = true;
             _store.Changed -= RequestRender;
+            _store.ToggleVisibilityRequested -= RequestToggleVisibility;
             Volatile.Write(ref _visible, 0);
             _clock?.Dispose();
             _renderer?.Dispose();

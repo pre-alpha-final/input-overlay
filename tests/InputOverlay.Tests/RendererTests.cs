@@ -37,6 +37,57 @@ public sealed class RendererTests
         Assert.Equal(keys.Length, keys.Distinct().Count());
     }
 
+    [Theory]
+    [InlineData(0.5f)]
+    [InlineData(1f)]
+    [InlineData(1.5f)]
+    [InlineData(2f)]
+    [InlineData(3f)]
+    public void AllTenHistoryRowsRemainVisibleAfterTimersCompleteAndResetClearsThem(float scale)
+    {
+        using var surface = new LayeredSurface((int)(OverlayRenderer.LogicalWidth * scale),
+            (int)(OverlayRenderer.LogicalHeight * scale));
+        using var renderer = new OverlayRenderer(surface, scale);
+        var state = new InputState(1000);
+        for (int index = 0; index < 12; index++) state.Mouse(1, 0x0400, 120, index);
+        renderer.Draw(state.Snapshot, 1000);
+        surface.Graphics.Flush();
+        for (int index = 0; index < 10; index++)
+        {
+            int x = (int)(400 * scale), y = (int)((index * 22 + 14) * scale);
+            Assert.True(surface.Bitmap.GetPixel(x, y).A > 0, $"History row {index} is missing at scale {scale}.");
+        }
+        Assert.Equal(0, surface.Bitmap.GetPixel(surface.Width - 1, surface.Height - 1).A);
+        state.Reset(1001);
+        renderer.Draw(state.Snapshot, 1001);
+        surface.Graphics.Flush();
+        Assert.Equal(0, surface.Bitmap.GetPixel((int)(400 * scale), (int)(14 * scale)).A);
+    }
+
+    [Fact]
+    public void EarlierRowKeepsItsOwnTimeAndFramesWhenANewInputIsAdded()
+    {
+        using var surface = new LayeredSurface(OverlayRenderer.LogicalWidth, OverlayRenderer.LogicalHeight);
+        using var renderer = new OverlayRenderer(surface, 1);
+        var state = new InputState(1000);
+        state.Keyboard(1, 0x21, 0, 0);
+        renderer.Draw(state.Snapshot, 20);
+        surface.Graphics.Flush();
+        using var before = (Bitmap)surface.Bitmap.Clone();
+        state.Mouse(2, 1, 0, 20);
+        renderer.Draw(state.Snapshot, 20);
+        surface.Graphics.Flush();
+        bool newestDiffers = false;
+        for (int y = 4; y < 24; y++)
+        for (int x = 478; x < 666; x++)
+        {
+            int previous = before.GetPixel(x, y).ToArgb();
+            Assert.Equal(previous, surface.Bitmap.GetPixel(x, y + 22).ToArgb());
+            newestDiffers |= previous != surface.Bitmap.GetPixel(x, y).ToArgb();
+        }
+        Assert.True(newestDiffers, "The new row should read 0 ms and 0 f@60 while the previous row reads 20 ms and 1.2 f@60.");
+    }
+
     [Fact]
     public void WritesNeutralAndActiveFramesForVisualReview()
     {
@@ -49,10 +100,16 @@ public sealed class RendererTests
         surface.Graphics.Flush();
         surface.Bitmap.Save(Path.Combine(directory, "overlay-idle.png"), ImageFormat.Png);
         state.Keyboard(1, 0x11, 0, 100);
-        state.Keyboard(1, 0x21, 0, 100);
-        state.Keyboard(1, 0x1d, 0, 100);
-        state.Mouse(2, 0x0441, 120, 100);
-        renderer.Draw(state.Snapshot, 138);
+        state.Keyboard(1, 0x21, 0, 180);
+        state.Keyboard(1, 0x1d, 0, 260);
+        state.Mouse(2, 0x0040, 0, 340);
+        state.Mouse(2, 0x0001, 0, 420);
+        state.Mouse(2, 0x0400, 120, 500);
+        state.Keyboard(1, 0x39, 0, 580);
+        state.Keyboard(1, 0x1d, 2, 660);
+        state.Mouse(2, 0x0004, 0, 740);
+        state.Mouse(2, 0x0400, -120, 820);
+        renderer.Draw(state.Snapshot, 858);
         surface.Graphics.Flush();
         surface.Bitmap.Save(Path.Combine(directory, "overlay-active.png"), ImageFormat.Png);
     }

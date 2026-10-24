@@ -52,16 +52,20 @@ public sealed class InputStateTests
         for (int i = 1; i < 1000; i++) Assert.False(state.Keyboard(1, 0x12, 0, i));
         Assert.Equal(0, state.Snapshot.LastActivity);
         Assert.Equal(version, state.Snapshot.Version);
-        Assert.False(state.Snapshot.TimerAt(650).Visible);
+        InputHistoryEntry entry = Assert.Single(state.Snapshot.History);
+        Assert.Equal(new InputHistoryEntry(0x12, 0), entry);
+        Assert.False(state.Snapshot.IsAnimating(650));
     }
 
     [Fact]
-    public void NonDisplayedKeyResetsTimerButDoesNotAddAKeycap()
+    public void NonDisplayedKeyAddsHistoryWithoutAddingAKeycap()
     {
         var state = new InputState(1000);
         state.Keyboard(1, 0x15, 0, 100); // Y
         Assert.Equal(0UL, state.Snapshot.Pressed);
-        Assert.Equal(new TimerVisual(25, 1), state.Snapshot.TimerAt(125));
+        InputHistoryEntry entry = Assert.Single(state.Snapshot.History);
+        Assert.Equal("Y", InputCodes.Label(entry.Code));
+        Assert.Equal(new TimerVisual(25, 1), entry.TimerAt(125, state.Snapshot.Frequency));
     }
 
     [Fact]
@@ -176,9 +180,68 @@ public sealed class InputStateTests
         state.Reset(30);
         Assert.Equal(0UL, state.Snapshot.Pressed);
         Assert.False(state.Snapshot.IsAnimating(30));
+        Assert.Empty(state.Snapshot.History);
         Assert.True(state.Keyboard(1, 0x21, 0, 40));
         Assert.True(state.Snapshot.IsDown(0x21));
     }
+
+    [Fact]
+    public void HistoryKeepsOnlyLastTenInputsNewestFirstIncludingRepeatedTaps()
+    {
+        var state = new InputState(1000);
+        for (int index = 0; index < 15; index++)
+        {
+            state.Keyboard(1, 0x21, 0, index * 100);
+            state.Keyboard(1, 0x21, 1, index * 100 + 10);
+        }
+        InputSnapshot snapshot = state.Snapshot;
+        Assert.Equal(10, snapshot.History.Length);
+        Assert.Equal(Enumerable.Range(5, 10).Reverse().Select(index => (long)index * 100),
+            snapshot.History.Select(entry => entry.Timestamp));
+        Assert.All(snapshot.History, entry => Assert.Equal(0x21, entry.Code));
+    }
+
+    [Fact]
+    public void HistorySnapshotsAreUnaffectedByNewInputsEvictionAndReset()
+    {
+        var state = new InputState(1000);
+        for (int index = 0; index < 10; index++) state.Mouse(1, 0x0400, 120, index);
+        InputSnapshot before = state.Snapshot;
+        state.Mouse(1, 0x0400, -120, 10);
+        state.Reset(11);
+        Assert.Equal(10, before.History.Length);
+        Assert.Equal(Enumerable.Range(0, 10).Reverse().Select(index => (long)index),
+            before.History.Select(entry => entry.Timestamp));
+        Assert.All(before.History, entry => Assert.Equal(InputCodes.ScrollUp, entry.Code));
+        Assert.Empty(state.Snapshot.History);
+    }
+
+    [Fact]
+    public void HistoryIncludesEveryMouseButtonAndEachWheelDirection()
+    {
+        var state = new InputState(1000);
+        state.Mouse(1, 0x0555, 120, 100);
+        state.Mouse(1, 0x0400, -1, 200);
+        Assert.Equal(new[] { InputCodes.ScrollDown, InputCodes.ScrollUp, InputCodes.MouseForward,
+            InputCodes.MouseBack, InputCodes.MouseMiddle, InputCodes.MouseRight, InputCodes.MouseLeft },
+            state.Snapshot.History.Select(entry => entry.Code));
+        state.Mouse(1, 0x02aa, 0, 210);
+        Assert.Equal(7, state.Snapshot.History.Length);
+        state.RemoveDevice(1, 220);
+        Assert.Equal(7, state.Snapshot.History.Length);
+    }
+
+    [Theory]
+    [InlineData(0x11d, "RCtrl")]
+    [InlineData(0x36, "RShift")]
+    [InlineData(0x148, "Up")]
+    [InlineData(0x21d, "Pause")]
+    [InlineData(0x57, "F11")]
+    [InlineData(InputCodes.MouseBack, "Mouse 4")]
+    [InlineData(InputCodes.ScrollDown, "Wheel down")]
+    [InlineData(0x7f, "0x07F")]
+    public void HistoryLabelsDistinguishExtendedKeysAndMouseInputs(int code, string label) =>
+        Assert.Equal(label, InputCodes.Label(code));
 
     [Fact]
     public void UnknownReleasesAndInvalidScanCodesDoNothing()
