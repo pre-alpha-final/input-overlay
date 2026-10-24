@@ -7,7 +7,7 @@ namespace InputOverlay.Overlay;
 
 internal sealed class OverlayRenderer : IDisposable
 {
-    public const int LogicalWidth = 476, LogicalHeight = 224;
+    public const int LogicalWidth = 680, LogicalHeight = 224;
     private readonly LayeredSurface _surface;
     private readonly float _scale;
     private readonly Bitmap _background;
@@ -15,6 +15,16 @@ internal sealed class OverlayRenderer : IDisposable
     private readonly Font _timer = new("Consolas", 15, FontStyle.Regular, GraphicsUnit.Pixel);
     private readonly StringFormat _center = new()
     { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+    private readonly StringFormat _historyLabel = new()
+    {
+        Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center,
+        FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter
+    };
+    private readonly StringFormat _historyTimer = new()
+    {
+        Alignment = StringAlignment.Far, LineAlignment = StringAlignment.Center,
+        FormatFlags = StringFormatFlags.NoWrap
+    };
     private static readonly Color Accent = Color.FromArgb(250, 69, 222, 237);
 
     internal readonly record struct Cap(int Code, string Label, RectangleF Bounds);
@@ -105,11 +115,22 @@ internal sealed class OverlayRenderer : IDisposable
             if (IsSideButton(button.Code)) DrawCap(graphics, button, snapshot.IsDown(button.Code));
         if (snapshot.ScrollUpAt(now)) DrawScroll(graphics, true, true);
         if (snapshot.ScrollDownAt(now)) DrawScroll(graphics, false, true);
-        TimerVisual timer = snapshot.TimerAt(now);
-        if (timer.Visible)
+        for (int index = 0; index < snapshot.History.Length; index++)
         {
-            using var brush = new SolidBrush(Color.FromArgb((int)(240 * timer.Opacity), 232, 240, 244));
-            graphics.DrawString($"{timer.Milliseconds,3} ms", _timer, brush, new RectangleF(382, 184, 86, 32), _center);
+            InputHistoryEntry entry = snapshot.History[index];
+            TimerVisual timer = entry.TimerAt(now, snapshot.Frequency);
+            float y = index * 22;
+            using GraphicsPath row = Rounded(new RectangleF(382, y, 286, 20), 4);
+            using var fill = new SolidBrush(Color.FromArgb(150, 23, 29, 35));
+            using var label = new SolidBrush(index == 0 ? Color.FromArgb((int)(250 * timer.Opacity), Accent)
+                : Color.FromArgb((int)(240 * timer.Opacity), 224, 233, 239));
+            using var time = new SolidBrush(Color.FromArgb((int)(240 * timer.Opacity), 232, 240, 244));
+            graphics.FillPath(fill, row);
+            graphics.DrawString(InputCodes.Label(entry.Code), _label, label, new RectangleF(389, y, 84, 20), _historyLabel);
+            string value = timer.Milliseconds == 500 ? "500+ ms" : $"{timer.Milliseconds} ms";
+            graphics.DrawString(value, _timer, time, new RectangleF(474, y, 76, 20), _historyTimer);
+            string frames = $"{timer.FramesAt60:0.##}{(timer.Milliseconds == 500 ? "+" : "")} f@60";
+            graphics.DrawString(frames, _timer, time, new RectangleF(560, y, 102, 20), _historyTimer);
         }
     }
 
@@ -228,5 +249,7 @@ internal sealed class OverlayRenderer : IDisposable
         _label.Dispose();
         _timer.Dispose();
         _center.Dispose();
+        _historyLabel.Dispose();
+        _historyTimer.Dispose();
     }
 }
