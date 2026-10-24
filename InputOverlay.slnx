@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/InputOverlay/InputOverlay.csproj" />
+  <Project Path="tests/InputOverlay.Tests/InputOverlay.Tests.csproj" />
+</Solution>

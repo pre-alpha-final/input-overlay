@@ -1,0 +1,187 @@
+using System.Diagnostics;
+using System.Runtime.ExceptionServices;
+using System.Runtime.InteropServices;
+using InputOverlay.Input;
+using InputOverlay.Overlay;
+using Xunit.Abstractions;
+
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
+
+namespace InputOverlay.Tests;
+
+public sealed class WindowsIntegrationTests(ITestOutputHelper output)
+{
+    [DllImport("user32.dll")]
+    private static extern nint GetForegroundWindow();
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
+    private static extern nint GetWindowLongPtr(nint window, int index);
+    [DllImport("user32.dll")]
+    private static extern nint WindowFromPoint(Native.Point point);
+    [DllImport("user32.dll")]
+    private static extern uint GetRegisteredRawInputDevices(nint devices, ref uint count, uint size);
+
+    [Fact]
+    public void NativeInputStructuresMatchWindowsX64Abi()
+    {
+        Assert.Equal(8, IntPtr.Size);
+        Assert.Equal(24, Marshal.SizeOf<Native.RawHeader>());
+        Assert.Equal(16, Marshal.SizeOf<Native.RawKeyboard>());
+        Assert.Equal(24, Marshal.SizeOf<Native.RawMouse>());
+        Assert.Equal(16, Marshal.SizeOf<Native.RawInputDevice>());
+        Assert.Equal(4, Marshal.OffsetOf<Native.RawMouse>(nameof(Native.RawMouse.ButtonFlags)).ToInt32());
+        Assert.Equal(6, Marshal.OffsetOf<Native.RawMouse>(nameof(Native.RawMouse.ButtonData)).ToInt32());
+    }
+
+    [Fact]
+    public void CaptureRegistersKeyboardAndMouseInBackgroundAndUnregistersOnShutdown()
+    {
+        var store = new InputStore();
+        var diagnostics = new Diagnostics();
+        Exception? failure = null;
+        using (var capture = new RawInputCapture(store, diagnostics, exception => failure = exception))
+        {
+            Native.RawInputDevice[] registrations = Registrations();
+            foreach (ushort usage in new ushort[] { 2, 6 })
+            {
+                Native.RawInputDevice device = Assert.Single(registrations, item => item.UsagePage == 1 && item.Usage == usage);
+                output.WriteLine($"Usage {usage}: flags 0x{device.Flags:x}; target {device.Target}");
+                Assert.NotEqual(0, device.Target);
+                // Windows readback omits DEVNOTIFY; require background reception and no legacy suppression.
+                Assert.Equal(Native.RidevInputSink, device.Flags & Native.RidevInputSink);
+                Assert.Equal(0u, device.Flags & 0x30);
+            }
+        }
+        Assert.Null(failure);
+        Assert.DoesNotContain(Registrations(), item => item.UsagePage == 1 && item.Usage is 2 or 6);
+    }
+
+    [Fact]
+    public void OverlayStaysAboveBorderlessWindowWithoutTakingFocusAndAllowsClickThrough()
+    {
+        OnSta(() =>
+        {
+            Rectangle screen = Screen.PrimaryScreen!.Bounds;
+            using var background = new Form
+            {
+                Text = "InputOverlay verification", FormBorderStyle = FormBorderStyle.None,
+                StartPosition = FormStartPosition.Manual,
+                Bounds = new Rectangle(screen.Left, screen.Bottom - Math.Min(500, screen.Height), screen.Width, Math.Min(500, screen.Height)),
+                BackColor = Color.FromArgb(45, 52, 60), ShowInTaskbar = false
+            };
+            background.Show();
+            Application.DoEvents();
+            nint foreground = GetForegroundWindow();
+            var store = new InputStore();
+            var diagnostics = new Diagnostics();
+            Exception? failure = null;
+            using var overlay = new OverlayWindow(new Options(), store, diagnostics, exception => failure = exception);
+            var point = new Native.Point(overlay.Left + 20, overlay.Top + 20);
+            // Windows may keep the user's current app in front of the verification window.
+            nint underlying = WindowFromPoint(point);
+            overlay.Show();
+            PumpUntil(() => diagnostics.FrameCount > 0);
+            Assert.Null(failure);
+            Assert.Equal(foreground, GetForegroundWindow());
+            long styles = GetWindowLongPtr(overlay.Handle, -20);
+            foreach (int flag in new[] { Native.WsExLayered, Native.WsExTransparent, Native.WsExNoActivate, Native.WsExToolWindow, Native.WsExTopmost })
+                Assert.Equal((long)flag, styles & flag);
+            Assert.Equal(0, styles & 0x40000); // WS_EX_APPWINDOW
+            nint hit = WindowFromPoint(point);
+            Assert.NotEqual(0, underlying);
+            Assert.NotEqual(overlay.Handle, hit);
+            Assert.Equal(underlying, hit);
+            Assert.InRange(Math.Abs(overlay.Left + overlay.Width / 2 - (screen.Left + screen.Width / 2)), 0, 1);
+            Assert.True(overlay.Bottom <= screen.Bottom);
+            overlay.RequestShow(false);
+            PumpUntil(() => !overlay.Visible);
+            overlay.RequestShow(true);
+            PumpUntil(() => overlay.Visible);
+            Assert.Equal(foreground, GetForegroundWindow());
+            Assert.Null(failure);
+            overlay.Close();
+        });
+    }
+
+    [Fact]
+    public void RenderingCoalescesFloodsUpdatesPromptlyAndStopsWhenIdle()
+    {
+        OnSta(() =>
+        {
+            var store = new InputStore();
+            var diagnostics = new Diagnostics();
+            Exception? failure = null;
+            using var overlay = new OverlayWindow(new Options(), store, diagnostics, exception => failure = exception);
+            overlay.Show();
+            PumpUntil(() => diagnostics.FrameCount > 0);
+            for (int index = 0; index < 64; index++)
+            {
+                long previous = diagnostics.ChangedStateSamples;
+                store.Keyboard(1, 0x21, (ushort)(index % 2), Stopwatch.GetTimestamp());
+                PumpUntil(() => diagnostics.ChangedStateSamples > previous);
+            }
+            output.WriteLine(diagnostics.ToString());
+            Assert.Null(failure);
+            long version = store.Snapshot().Version;
+            for (int index = 0; index < 100_000; index++) store.Mouse(1, 0, 0, Stopwatch.GetTimestamp());
+            Assert.Equal(version, store.Snapshot().Version);
+            // The active countdown expires even if no further input is received.
+            PumpFor(750);
+            long frames = diagnostics.FrameCount;
+            PumpFor(60);
+            Assert.Equal(frames, diagnostics.FrameCount);
+            Assert.Null(failure);
+            overlay.Close();
+        });
+    }
+
+    private static Native.RawInputDevice[] Registrations()
+    {
+        uint count = 0;
+        uint size = (uint)Marshal.SizeOf<Native.RawInputDevice>();
+        Assert.NotEqual(uint.MaxValue, GetRegisteredRawInputDevices(0, ref count, size));
+        if (count == 0) return [];
+        nint buffer = Marshal.AllocHGlobal(checked((int)(count * size)));
+        try
+        {
+            Assert.NotEqual(uint.MaxValue, GetRegisteredRawInputDevices(buffer, ref count, size));
+            return Enumerable.Range(0, (int)count)
+                .Select(index => Marshal.PtrToStructure<Native.RawInputDevice>(buffer + index * (int)size)).ToArray();
+        }
+        finally { Marshal.FreeHGlobal(buffer); }
+    }
+
+    private static void OnSta(Action action)
+    {
+        Exception? failure = null;
+        var thread = new Thread(() =>
+        {
+            try { Application.SetHighDpiMode(HighDpiMode.PerMonitorV2); action(); }
+            catch (Exception exception) { failure = exception; }
+        }) { IsBackground = true };
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        Assert.True(thread.Join(TimeSpan.FromSeconds(15)), "Windows UI test timed out.");
+        if (failure != null) ExceptionDispatchInfo.Capture(failure).Throw();
+    }
+
+    private static void PumpUntil(Func<bool> predicate)
+    {
+        var timeout = Stopwatch.StartNew();
+        while (!predicate())
+        {
+            Assert.True(timeout.Elapsed < TimeSpan.FromSeconds(5), "Window did not process the expected update.");
+            Application.DoEvents();
+            Thread.Sleep(1);
+        }
+    }
+
+    private static void PumpFor(int milliseconds)
+    {
+        var elapsed = Stopwatch.StartNew();
+        while (elapsed.ElapsedMilliseconds < milliseconds)
+        {
+            Application.DoEvents();
+            Thread.Sleep(1);
+        }
+    }
+}
