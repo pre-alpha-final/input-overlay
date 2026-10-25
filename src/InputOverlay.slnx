@@ -3,4 +3,6 @@
   <Project Path="../tests/InputOverlayMnK.Tests/InputOverlayMnK.Tests.csproj" />
   <Project Path="InputOverlayPS4/InputOverlayPS4.csproj" />
   <Project Path="../tests/InputOverlayPS4.Tests/InputOverlayPS4.Tests.csproj" />
+  <Project Path="InputOverlayPS5/InputOverlayPS5.csproj" />
+  <Project Path="../tests/InputOverlayPS5.Tests/InputOverlayPS5.Tests.csproj" />
 </Solution>
