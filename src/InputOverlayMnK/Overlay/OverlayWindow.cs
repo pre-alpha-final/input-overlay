@@ -1,9 +1,9 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using InputOverlay.Input;
+using InputOverlayMnK.Input;
 
-namespace InputOverlay.Overlay;
+namespace InputOverlayMnK.Overlay;
 
 internal sealed class OverlayWindow : Form
 {
@@ -29,7 +29,7 @@ internal sealed class OverlayWindow : Form
         _store = store;
         _diagnostics = diagnostics;
         _failed = failed;
-        Text = "InputOverlay";
+        Text = "InputOverlayMnK";
         FormBorderStyle = FormBorderStyle.None;
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.Manual;

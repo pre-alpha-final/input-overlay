@@ -1,4 +1,4 @@
 <Solution>
-  <Project Path="src/InputOverlay/InputOverlay.csproj" />
-  <Project Path="tests/InputOverlay.Tests/InputOverlay.Tests.csproj" />
+  <Project Path="src/InputOverlayMnK/InputOverlayMnK.csproj" />
+  <Project Path="tests/InputOverlayMnK.Tests/InputOverlayMnK.Tests.csproj" />
 </Solution>

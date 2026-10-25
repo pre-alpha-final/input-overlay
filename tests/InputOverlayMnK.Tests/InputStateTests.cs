@@ -1,6 +1,6 @@
-using InputOverlay.Input;
+using InputOverlayMnK.Input;
 
-namespace InputOverlay.Tests;
+namespace InputOverlayMnK.Tests;
 
 public sealed class InputStateTests
 {

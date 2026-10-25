@@ -1,4 +1,4 @@
-namespace InputOverlay.Overlay;
+namespace InputOverlayMnK.Overlay;
 
 internal static class DisplayInfo
 {

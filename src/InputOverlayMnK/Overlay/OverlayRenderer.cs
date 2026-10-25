@@ -1,9 +1,9 @@
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Drawing.Text;
-using InputOverlay.Input;
+using InputOverlayMnK.Input;
 
-namespace InputOverlay.Overlay;
+namespace InputOverlayMnK.Overlay;
 
 internal sealed class OverlayRenderer : IDisposable
 {

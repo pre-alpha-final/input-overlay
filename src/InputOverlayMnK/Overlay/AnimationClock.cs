@@ -2,7 +2,7 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 
-namespace InputOverlay.Overlay;
+namespace InputOverlayMnK.Overlay;
 
 internal sealed class AnimationClock : IDisposable
 {

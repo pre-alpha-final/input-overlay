@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 
-namespace InputOverlay.Input;
+namespace InputOverlayMnK.Input;
 
 internal readonly record struct TimerVisual(int Milliseconds, float Opacity)
 {

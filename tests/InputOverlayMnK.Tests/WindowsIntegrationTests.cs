@@ -1,13 +1,13 @@
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
-using InputOverlay.Input;
-using InputOverlay.Overlay;
+using InputOverlayMnK.Input;
+using InputOverlayMnK.Overlay;
 using Xunit.Abstractions;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
-namespace InputOverlay.Tests;
+namespace InputOverlayMnK.Tests;
 
 public sealed class WindowsIntegrationTests(ITestOutputHelper output)
 {
@@ -63,7 +63,7 @@ public sealed class WindowsIntegrationTests(ITestOutputHelper output)
             Rectangle screen = Screen.PrimaryScreen!.Bounds;
             using var background = new Form
             {
-                Text = "InputOverlay verification", FormBorderStyle = FormBorderStyle.None,
+                Text = "InputOverlayMnK verification", FormBorderStyle = FormBorderStyle.None,
                 StartPosition = FormStartPosition.Manual,
                 Bounds = new Rectangle(screen.Left, screen.Bottom - Math.Min(500, screen.Height), screen.Width, Math.Min(500, screen.Height)),
                 BackColor = Color.FromArgb(45, 52, 60), ShowInTaskbar = false

@@ -2,7 +2,7 @@ using System.ComponentModel;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 
-namespace InputOverlay.Overlay;
+namespace InputOverlayMnK.Overlay;
 
 internal sealed class LayeredSurface : IDisposable
 {

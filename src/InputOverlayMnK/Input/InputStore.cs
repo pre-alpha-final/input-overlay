@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace InputOverlay.Input;
+namespace InputOverlayMnK.Input;
 
 internal sealed class InputStore
 {

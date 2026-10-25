@@ -1,4 +1,4 @@
-namespace InputOverlay.Input;
+namespace InputOverlayMnK.Input;
 
 internal static class InputCodes
 {

@@ -1,8 +1,8 @@
 using System.Drawing.Imaging;
-using InputOverlay.Input;
-using InputOverlay.Overlay;
+using InputOverlayMnK.Input;
+using InputOverlayMnK.Overlay;
 
-namespace InputOverlay.Tests;
+namespace InputOverlayMnK.Tests;
 
 public sealed class RendererTests
 {

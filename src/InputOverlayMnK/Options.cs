@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace InputOverlay;
+namespace InputOverlayMnK;
 
 internal sealed record Options(int? Monitor = null, float Scale = 1, int BottomMargin = 24,
     bool ListMonitors = false, bool Help = false)
@@ -40,10 +40,10 @@ internal sealed record Options(int? Monitor = null, float Scale = 1, int BottomM
     }
 
     public const string Usage = """
-        InputOverlay - keyboard and mouse overlay for windowed/borderless games
+        InputOverlayMnK - keyboard and mouse overlay for windowed/borderless games
 
-        InputOverlay.exe [--monitor N] [--scale N] [--bottom-margin N]
-        InputOverlay.exe --list-monitors
+        InputOverlayMnK.exe [--monitor N] [--scale N] [--bottom-margin N]
+        InputOverlayMnK.exe --list-monitors
 
           --monitor N        Monitor number from --list-monitors (default: primary)
           --scale N          Size multiplier, 0.5 to 3 (default: 1)

@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace InputOverlay;
+namespace InputOverlayMnK;
 
 internal static class Native
 {

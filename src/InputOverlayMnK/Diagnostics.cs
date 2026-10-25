@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using InputOverlay.Input;
+using InputOverlayMnK.Input;
 
-namespace InputOverlay;
+namespace InputOverlayMnK;
 
 internal sealed class Diagnostics
 {

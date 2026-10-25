@@ -1,7 +1,7 @@
-using InputOverlay.Input;
-using InputOverlay.Overlay;
+using InputOverlayMnK.Input;
+using InputOverlayMnK.Overlay;
 
-namespace InputOverlay;
+namespace InputOverlayMnK;
 
 internal static class Program
 {
@@ -31,7 +31,7 @@ internal static class Program
             using (window = new OverlayWindow(options, store, diagnostics, Failed))
             using (var capture = new RawInputCapture(store, diagnostics, Failed))
             {
-                Console.WriteLine("InputOverlay running. Use a windowed or borderless game.");
+                Console.WriteLine("InputOverlayMnK running. Use a windowed or borderless game.");
                 Console.WriteLine("Numpad 0: hide/show. Ctrl+C exits.");
                 Console.CancelKeyPress += Cancel;
                 try
@@ -51,7 +51,7 @@ internal static class Program
         }
         catch (Exception exception)
         {
-            Console.Error.WriteLine($"InputOverlay failed: {exception.GetBaseException().Message}");
+            Console.Error.WriteLine($"InputOverlayMnK failed: {exception.GetBaseException().Message}");
             return 1;
         }
     }

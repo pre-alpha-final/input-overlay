@@ -2,7 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace InputOverlay.Input;
+namespace InputOverlayMnK.Input;
 
 internal sealed class RawInputCapture : IDisposable
 {
@@ -78,7 +78,7 @@ internal sealed class RawInputCapture : IDisposable
             try
             {
                 _buffer = Marshal.AllocHGlobal((int)_capacity);
-                CreateHandle(new CreateParams { Caption = "InputOverlay.RawInput", Parent = Native.HwndMessage });
+                CreateHandle(new CreateParams { Caption = "InputOverlayMnK.RawInput", Parent = Native.HwndMessage });
                 Native.RawInputDevice[] devices =
                 [
                     new() { UsagePage = 1, Usage = 6, Flags = Native.RidevInputSink | Native.RidevDevNotify, Target = Handle },

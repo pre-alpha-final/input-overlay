@@ -1,4 +1,4 @@
-namespace InputOverlay.Tests;
+namespace InputOverlayMnK.Tests;
 
 public sealed class OptionsTests
 {
