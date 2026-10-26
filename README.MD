@@ -2,11 +2,11 @@
 
 ![Keyboard and mouse overlay showing live inputs during gameplay](docs/valor.gif)
 
-Input Overlay displays your keyboard, mouse, or PlayStation controller inputs over your game. Pressed buttons light up, and a history of your last 10 inputs helps you follow a sequence and see when each press happened.
+Input Overlay displays your keyboard, mouse, PlayStation, or Xbox controller inputs over your game. Pressed buttons light up, and a history of your last 10 inputs helps you follow a sequence and see when each press happened.
 
 The overlay is transparent, stays above windowed or borderless games, and lets mouse clicks pass through without taking focus from your game.
 
-**Tap <kbd>Num 0</kbd> (Numpad 0) to hide or show the overlay at any time.** It works while you're in a game and with Num Lock either on or off, so you can clear the screen and bring it back without switching windows. This shortcut works in all three overlays.
+**Tap <kbd>Num 0</kbd> (Numpad 0) to hide or show the overlay at any time.** It works while you're in a game and with Num Lock either on or off, so you can clear the screen and bring it back without switching windows. This shortcut works in all four overlays.
 
 ## Overlays
 
@@ -28,6 +28,14 @@ Supports the standard Sony DualSense controller over USB or Bluetooth. Shows but
 
 ![PS5 DualSense overlay with active buttons, stick positions, trigger pressure, and input history](docs/overlay-ps5.png)
 
+### Xbox Series X|S
+
+Shows A/B/X/Y, the D-pad, offset sticks and clicks, LT/RT pressure, LB/RB, View, Menu,
+Xbox and Share using Microsoft GameInput. Supports USB, Bluetooth and the Xbox Wireless
+Adapter through Windows' controller drivers.
+
+![Xbox Series X|S overlay with active buttons, stick positions, trigger pressure, and input history](docs/overlay-xbox.png)
+
 ## Adjust size and position
 
 | Option | What it does | Default |
@@ -48,9 +56,9 @@ Timers stop at `500+ ms` / `30+ f@60` and dim, but entries stay visible until ne
 
 - The first accessible supported controller is selected. If it disconnects, the controls return to neutral, the history stays visible, and the overlay reconnects automatically when a supported controller becomes available.
 - Both sticks have a 10% circular deadzone to suppress resting drift. Trigger pressure is displayed without a deadzone.
-- If a controller is missing, check whether another application has hidden it or opened it exclusively. The overlay needs access to the physical controller.
+- If a controller is missing, check whether another application has hidden it or opened it exclusively. The PlayStation overlays need shared access to the physical controller; Xbox input comes through GameInput.
 
-For more controller-specific details, see the [PS4 README](src/InputOverlayPS4/README.md) or [PS5 README](src/InputOverlayPS5/README.md).
+For more controller-specific details, see the [PS4 README](src/InputOverlayPS4/README.md), [PS5 README](src/InputOverlayPS5/README.md), or [Xbox README](src/InputOverlayXbox/README.md).
 
 ## License
 
