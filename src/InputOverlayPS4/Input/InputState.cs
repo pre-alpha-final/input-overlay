@@ -4,7 +4,7 @@ namespace InputOverlayPS4.Input;
 
 internal readonly record struct TimerVisual(int Milliseconds, float Opacity)
 {
-    public double FramesAt60 => Milliseconds / (1000d / 60);
+    public double FramesAt60 => 1 + Milliseconds / (1000d / 60);
 }
 
 internal readonly record struct InputHistoryEntry(ControllerButtons Code, long Timestamp)

@@ -183,15 +183,23 @@ public sealed class InputStateTests
     }
 
     [Theory]
-    [InlineData(0, 0, 1)] [InlineData(499, 499, 1)] [InlineData(500, 500, 1)]
-    [InlineData(575, 500, 0.75)] [InlineData(650, 500, 0.5)] [InlineData(1000, 500, 0.5)]
-    public void HistoryTimersCapAt500ThenDimAndRemainReadable(int elapsed, int milliseconds, double opacity)
+    [InlineData(0, 0, 1, 1)]
+    [InlineData(1, 1, 1, 1.06)]
+    [InlineData(16, 16, 1, 1.96)]
+    [InlineData(17, 17, 1, 2.02)]
+    [InlineData(25, 25, 1, 2.5)]
+    [InlineData(499, 499, 1, 30.94)]
+    [InlineData(500, 500, 1, 31)]
+    [InlineData(575, 500, 0.75, 31)]
+    [InlineData(650, 500, 0.5, 31)]
+    [InlineData(1000, 500, 0.5, 31)]
+    public void HistoryTimersCapAt500ThenDimAndRemainReadable(int elapsed, int milliseconds, double opacity, double frames)
     {
         var entry = new InputHistoryEntry(ControllerButtons.A, 1000);
         TimerVisual timer = entry.TimerAt(1000 + elapsed, 1000);
         Assert.Equal(milliseconds, timer.Milliseconds);
         Assert.Equal(opacity, timer.Opacity, 5);
-        Assert.Equal(milliseconds / (1000d / 60), timer.FramesAt60, 5);
+        Assert.Equal(frames, timer.FramesAt60, 5);
     }
 
     [Fact]

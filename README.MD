@@ -48,9 +48,9 @@ Adapter through Windows' controller drivers.
 
 ## Read the input history
 
-The newest press appears at the top, with up to 10 entries visible. Each row shows the time since that press in milliseconds and the equivalent number of frames at 60 fps (`f@60`). This is a timing reference, not a measurement of your game's frame rate.
+The newest press appears at the top, with up to 10 entries visible. Each row shows the time since that press in milliseconds and a frame count at 60 fps (`f@60`) that starts at 1 for a new press. This is a timing reference, not a measurement of your game's frame rate.
 
-Timers stop at `500+ ms` / `30+ f@60` and dim, but entries stay visible until newer presses replace them. Releasing a button does not add a row. Controller stick movement and changes in trigger pressure do not add rows either; trigger button presses do.
+Timers stop at `500+ ms` / `31+ f@60` and dim, but entries stay visible until newer presses replace them. Releasing a button does not add a row. Controller stick movement and changes in trigger pressure do not add rows either; trigger button presses do.
 
 ## Controller notes
 

@@ -51,16 +51,16 @@ public sealed class TimerTests
     }
 
     [Theory]
-    [InlineData(0, 0)]
-    [InlineData(1, 0.06)]
-    [InlineData(16, 0.96)]
-    [InlineData(17, 1.02)]
-    [InlineData(25, 1.5)]
-    [InlineData(100, 6)]
-    [InlineData(250, 15)]
-    [InlineData(499, 29.94)]
-    [InlineData(500, 30)]
-    public void FrameReadoutDividesMillisecondsByThe60FpsFrameDuration(int milliseconds, double frames)
+    [InlineData(0, 1)]
+    [InlineData(1, 1.06)]
+    [InlineData(16, 1.96)]
+    [InlineData(17, 2.02)]
+    [InlineData(25, 2.5)]
+    [InlineData(100, 7)]
+    [InlineData(250, 16)]
+    [InlineData(499, 30.94)]
+    [InlineData(500, 31)]
+    public void FrameReadoutStartsAtOneAndAdvancesAt60Fps(int milliseconds, double frames)
     {
         var timer = new TimerVisual(milliseconds, 1);
         Assert.Equal(frames, timer.FramesAt60, precision: 10);

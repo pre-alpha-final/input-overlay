@@ -5,7 +5,7 @@ namespace InputOverlayMnK.Input;
 internal readonly record struct TimerVisual(int Milliseconds, float Opacity)
 {
     public bool Visible => Opacity > 0;
-    public double FramesAt60 => Milliseconds / (1000d / 60);
+    public double FramesAt60 => 1 + Milliseconds / (1000d / 60);
 }
 
 internal readonly record struct InputHistoryEntry(int Code, long Timestamp)
