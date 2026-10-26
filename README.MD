@@ -8,6 +8,12 @@ The overlay is transparent, stays above windowed or borderless games, and lets m
 
 **Tap <kbd>Num 0</kbd> (Numpad 0) to hide or show the overlay at any time.** It works while you're in a game and with Num Lock either on or off, so you can clear the screen and bring it back without switching windows. This shortcut works in all four overlays.
 
+## Requirements
+
+Windows x64 and the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
+are required to run the overlays. On the download page, choose the **Windows x64**
+installer under **.NET Desktop Runtime** and install it before running an overlay.
+
 ## Overlays
 
 ### Keyboard and mouse
@@ -59,6 +65,24 @@ Timers stop at `500+ ms` / `31+ f@60` and dim, but entries stay visible until ne
 - If a controller is missing, check whether another application has hidden it or opened it exclusively. The PlayStation overlays need shared access to the physical controller; Xbox input comes through GameInput.
 
 For more controller-specific details, see the [PS4 README](src/InputOverlayPS4/README.md), [PS5 README](src/InputOverlayPS5/README.md), or [Xbox README](src/InputOverlayXbox/README.md).
+
+## Build GitHub release assets
+
+On Windows with the .NET 10 SDK or newer, run from the repository root:
+
+```powershell
+.\build-release.ps1 -Version 1.0.0
+```
+
+This creates one Windows x64 Release ZIP per overlay and a SHA-256 checksum file
+in `artifacts/releases/`, ready to upload to a GitHub release. The ZIPs use the
+installed .NET 10 Desktop Runtime listed above. Extract an overlay's ZIP and run
+its executable. Keep the extracted files together, including the Xbox GameInput files.
+
+Omit `-Version` to use the project versions without a version in the asset names.
+Use `-OutputDirectory <path>` to change the destination; relative paths start at the
+repository root. Re-running replaces assets with matching names. The script does
+not create or publish a GitHub release.
 
 ## License
 
