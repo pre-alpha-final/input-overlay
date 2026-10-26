@@ -34,7 +34,8 @@ internal sealed class OverlayWindow : Form
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.Manual;
         AutoScaleMode = AutoScaleMode.None;
-        TopMost = true;
+        // Keep topmost positioning native: Form.TopMost makes WinForms restore focus
+        // during Show(), even when ShowWithoutActivation is true.
         try
         {
             _clock = new AnimationClock(RequestRender, failed);

@@ -71,6 +71,8 @@ public sealed class WindowsIntegrationTests(ITestOutputHelper output)
             var diagnostics = new Diagnostics();
             Exception? failure = null;
             using var overlay = new OverlayWindow(new Options(), store, diagnostics, exception => failure = exception);
+            int activations = 0;
+            overlay.Activated += (_, _) => activations++;
             var point = new Native.Point(overlay.Left + 20, overlay.Top + 20);
             // Windows may keep the user's current app in front of the verification window.
             nint underlying = WindowFromPoint(point);
@@ -78,6 +80,7 @@ public sealed class WindowsIntegrationTests(ITestOutputHelper output)
             PumpUntil(() => diagnostics.FrameCount > 0);
             Assert.Null(failure);
             Assert.NotEqual(overlay.Handle, GetForegroundWindow());
+            Assert.Equal(0, activations);
             long styles = GetWindowLongPtr(overlay.Handle, -20);
             foreach (int flag in new[] { Native.WsExLayered, Native.WsExTransparent, Native.WsExNoActivate, Native.WsExToolWindow, Native.WsExTopmost })
                 Assert.Equal((long)flag, styles & flag);
@@ -110,6 +113,7 @@ public sealed class WindowsIntegrationTests(ITestOutputHelper output)
             PumpUntil(() => overlay.Visible && diagnostics.FrameCount > frames);
             store.Keyboard(1, 0x52, 1, Stopwatch.GetTimestamp());
             Assert.NotEqual(overlay.Handle, GetForegroundWindow());
+            Assert.Equal(0, activations);
             Assert.Null(failure);
             overlay.Close();
         });
