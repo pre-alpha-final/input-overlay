@@ -55,7 +55,7 @@ internal sealed class OverlayWindow : Form
         {
             CreateParams parameters = base.CreateParams;
             parameters.ExStyle |= Native.WsExLayered | Native.WsExTransparent | Native.WsExNoActivate
-                | Native.WsExToolWindow | Native.WsExTopmost;
+                | Native.WsExTopmost;
             return parameters;
         }
     }
@@ -161,12 +161,15 @@ internal sealed class OverlayWindow : Form
                     Volatile.Write(ref _visible, visible ? 1 : 0);
                     if (visible)
                     {
+                        WindowState = FormWindowState.Normal;
                         Show();
                         RequestRender();
                     }
                     else
                     {
                         _clock?.SetActive(false, _refreshRate);
+                        // OBS skips minimized windows; hiding alone leaves its last captured frame visible.
+                        WindowState = FormWindowState.Minimized;
                         Hide();
                     }
                     return;

@@ -17,6 +17,13 @@ public sealed class WindowsIntegrationTests(ITestOutputHelper output)
     private static extern nint GetWindowLongPtr(nint window, int index);
     [DllImport("user32.dll")]
     private static extern nint WindowFromPoint(Native.Point point);
+    private delegate bool EnumWindowsCallback(nint window, nint parameter);
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool EnumWindows(EnumWindowsCallback callback, nint parameter);
+    [DllImport("user32.dll")]
+    private static extern bool IsWindowVisible(nint window);
+    [DllImport("user32.dll")]
+    private static extern bool IsIconic(nint window);
     [DllImport("user32.dll")]
     private static extern uint GetRegisteredRawInputDevices(nint devices, ref uint count, uint size);
 
@@ -86,9 +93,12 @@ public sealed class WindowsIntegrationTests(ITestOutputHelper output)
             Assert.Equal(foreground, GetForegroundWindow());
             Assert.Equal(0, activations);
             long styles = GetWindowLongPtr(overlay.Handle, -20);
-            foreach (int flag in new[] { Native.WsExLayered, Native.WsExTransparent, Native.WsExNoActivate, Native.WsExToolWindow, Native.WsExTopmost })
+            foreach (int flag in new[] { Native.WsExLayered, Native.WsExTransparent, Native.WsExNoActivate, Native.WsExTopmost })
                 Assert.Equal((long)flag, styles & flag);
+            Assert.Equal(0, styles & Native.WsExToolWindow); // OBS excludes tool windows.
             Assert.Equal(0, styles & 0x40000); // WS_EX_APPWINDOW
+            Assert.False(overlay.ShowInTaskbar);
+            Assert.Contains(overlay.Handle, VisibleTopLevelWindows());
             nint hit = WindowFromPoint(point);
             Assert.NotEqual(0, underlying);
             Assert.NotEqual(overlay.Handle, hit);
@@ -102,9 +112,14 @@ public sealed class WindowsIntegrationTests(ITestOutputHelper output)
             store.Keyboard(1, 0x52, 3, Stopwatch.GetTimestamp());
             PumpFor(25);
             Assert.True(overlay.Visible);
+            Rectangle originalBounds = overlay.Bounds;
+            nint foregroundBeforeHide = GetForegroundWindow();
             // Numpad 0 uses the same physical scan code with Num Lock on or off.
             store.Keyboard(1, 0x52, 0, Stopwatch.GetTimestamp());
             PumpUntil(() => !overlay.Visible);
+            Assert.True(IsIconic(overlay.Handle)); // OBS must stop drawing the captured window.
+            Assert.Equal(foregroundBeforeHide, GetForegroundWindow());
+            Assert.DoesNotContain(overlay.Handle, VisibleTopLevelWindows());
             for (int index = 0; index < 20; index++)
                 store.Keyboard(1, 0x52, 0, Stopwatch.GetTimestamp());
             PumpFor(25);
@@ -115,6 +130,9 @@ public sealed class WindowsIntegrationTests(ITestOutputHelper output)
             long frames = diagnostics.FrameCount;
             store.Keyboard(1, 0x52, 0, Stopwatch.GetTimestamp());
             PumpUntil(() => overlay.Visible && diagnostics.FrameCount > frames);
+            Assert.False(IsIconic(overlay.Handle));
+            Assert.Equal(originalBounds, overlay.Bounds);
+            Assert.Contains(overlay.Handle, VisibleTopLevelWindows());
             store.Keyboard(1, 0x52, 1, Stopwatch.GetTimestamp());
             Assert.Equal(foreground, GetForegroundWindow());
             Assert.Equal(0, activations);
@@ -153,6 +171,17 @@ public sealed class WindowsIntegrationTests(ITestOutputHelper output)
             Assert.Null(failure);
             overlay.Close();
         });
+    }
+
+    private static HashSet<nint> VisibleTopLevelWindows()
+    {
+        var windows = new HashSet<nint>();
+        Assert.True(EnumWindows((window, _) =>
+        {
+            if (IsWindowVisible(window)) windows.Add(window);
+            return true;
+        }, 0));
+        return windows;
     }
 
     private static Native.RawInputDevice[] Registrations()

@@ -42,6 +42,20 @@ Adapter through Windows' controller drivers.
 
 ![Xbox Series X|S overlay with active buttons, stick positions, trigger pressure, and input history](docs/overlay-xbox.png)
 
+## Capture in OBS
+
+1. Start the overlay and leave it visible.
+2. In OBS, choose **Sources > + > Window Capture** and select `InputOverlayMnK`,
+   `InputOverlayPS4`, `InputOverlayPS5`, or `InputOverlayXbox` from the **Window** list.
+3. Set **Capture Method** to **Modern (WGC)** (called **Windows 10 (1903 and up)**
+   in older OBS versions) and turn off **Capture Cursor**.
+4. Place the Window Capture source above your game source in the **Sources** list.
+
+The overlay stays click-through on your desktop. If it is missing from the Window
+list, press Numpad 0 to show it before opening the source properties.
+Numpad 0 hides the overlay on both your desktop and in OBS. Press it again to
+restore the overlay in the same position without switching away from your game.
+
 ## Adjust size and position
 
 | Option | What it does | Default |
