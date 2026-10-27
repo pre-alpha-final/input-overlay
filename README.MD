@@ -8,6 +8,22 @@ The overlay is transparent, stays above windowed or borderless games, and lets m
 
 **Tap <kbd>Num 0</kbd> (Numpad 0) to hide or show the overlay at any time.** It works while you're in a game and with Num Lock either on or off, so you can clear the screen and bring it back without switching windows. This shortcut works in all four overlays.
 
+## Releases
+
+Download Windows x64 builds from the [latest release](https://github.com/pre-alpha-final/input-overlay/releases/latest).
+
+Downloads for [v1.0.0](https://github.com/pre-alpha-final/input-overlay/releases/tag/v1.0.0):
+
+| Overlay | Download |
+| --- | --- |
+| Keyboard and mouse | [InputOverlayMnK](https://github.com/pre-alpha-final/input-overlay/releases/download/v1.0.0/InputOverlayMnK-1.0.0-win-x64.zip) |
+| PS4 / DualShock 4 | [InputOverlayPS4](https://github.com/pre-alpha-final/input-overlay/releases/download/v1.0.0/InputOverlayPS4-1.0.0-win-x64.zip) |
+| PS5 / DualSense | [InputOverlayPS5](https://github.com/pre-alpha-final/input-overlay/releases/download/v1.0.0/InputOverlayPS5-1.0.0-win-x64.zip) |
+| Xbox Series X\|S | [InputOverlayXbox](https://github.com/pre-alpha-final/input-overlay/releases/download/v1.0.0/InputOverlayXbox-1.0.0-win-x64.zip) |
+
+Install the runtime listed under [Requirements](#requirements), extract the ZIP,
+and run the matching `.exe`. Keep all extracted files together.
+
 ## Requirements
 
 Windows x64 and the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
