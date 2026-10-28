@@ -12,14 +12,14 @@ The overlay is transparent, stays above windowed or borderless games, and lets m
 
 Download Windows x64 builds from the [latest release](https://github.com/pre-alpha-final/input-overlay/releases/latest).
 
-Downloads for [v1.0.0](https://github.com/pre-alpha-final/input-overlay/releases/tag/v1.0.0):
+Downloads for [v1.1.0](https://github.com/pre-alpha-final/input-overlay/releases/tag/v1.1.0):
 
 | Overlay | Download |
 | --- | --- |
-| Keyboard and mouse | [InputOverlayMnK](https://github.com/pre-alpha-final/input-overlay/releases/download/v1.0.0/InputOverlayMnK-1.0.0-win-x64.zip) |
-| PS4 / DualShock 4 | [InputOverlayPS4](https://github.com/pre-alpha-final/input-overlay/releases/download/v1.0.0/InputOverlayPS4-1.0.0-win-x64.zip) |
-| PS5 / DualSense | [InputOverlayPS5](https://github.com/pre-alpha-final/input-overlay/releases/download/v1.0.0/InputOverlayPS5-1.0.0-win-x64.zip) |
-| Xbox Series X\|S | [InputOverlayXbox](https://github.com/pre-alpha-final/input-overlay/releases/download/v1.0.0/InputOverlayXbox-1.0.0-win-x64.zip) |
+| Keyboard and mouse | [InputOverlayMnK](https://github.com/pre-alpha-final/input-overlay/releases/download/v1.1.0/InputOverlayMnK-1.1.0-win-x64.zip) |
+| PS4 / DualShock 4 | [InputOverlayPS4](https://github.com/pre-alpha-final/input-overlay/releases/download/v1.1.0/InputOverlayPS4-1.1.0-win-x64.zip) |
+| PS5 / DualSense | [InputOverlayPS5](https://github.com/pre-alpha-final/input-overlay/releases/download/v1.1.0/InputOverlayPS5-1.1.0-win-x64.zip) |
+| Xbox Series X\|S | [InputOverlayXbox](https://github.com/pre-alpha-final/input-overlay/releases/download/v1.1.0/InputOverlayXbox-1.1.0-win-x64.zip) |
 
 Install the runtime listed under [Requirements](#requirements), extract the ZIP,
 and run the matching `.exe`. Keep all extracted files together.
@@ -97,24 +97,6 @@ Timers stop at `500+ ms` / `~31+ f@60` and dim, but entries stay visible until n
 - If a controller is missing, check whether another application has hidden it or opened it exclusively. The PlayStation overlays need shared access to the physical controller; Xbox input comes through GameInput.
 
 For more controller-specific details, see the [PS4 README](src/InputOverlayPS4/README.md), [PS5 README](src/InputOverlayPS5/README.md), or [Xbox README](src/InputOverlayXbox/README.md).
-
-## Build GitHub release assets
-
-On Windows with the .NET 10 SDK or newer, run from the repository root:
-
-```powershell
-.\build-release.ps1 -Version 1.0.0
-```
-
-This creates one Windows x64 Release ZIP per overlay and a SHA-256 checksum file
-in `artifacts/releases/`, ready to upload to a GitHub release. The ZIPs use the
-installed .NET 10 Desktop Runtime listed above. Extract an overlay's ZIP and run
-its executable. Keep the extracted files together, including the Xbox GameInput files.
-
-Omit `-Version` to use the project versions without a version in the asset names.
-Use `-OutputDirectory <path>` to change the destination; relative paths start at the
-repository root. Re-running replaces assets with matching names. The script does
-not create or publish a GitHub release.
 
 ## License
 
