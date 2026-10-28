@@ -60,10 +60,10 @@ public sealed class TimerTests
     [InlineData(250, 16)]
     [InlineData(499, 30.94)]
     [InlineData(500, 31)]
-    public void FrameReadoutStartsAtOneAndAdvancesAt60Fps(int milliseconds, double frames)
+    public void EstimatedFrameReadoutStartsAtOneAndAdvancesAt60Fps(int milliseconds, double frames)
     {
         var timer = new TimerVisual(milliseconds, 1);
-        Assert.Equal(frames, timer.FramesAt60, precision: 10);
+        Assert.Equal(frames, timer.EstimatedFramesAt60, precision: 10);
     }
 
     [Fact]
@@ -73,8 +73,25 @@ public sealed class TimerTests
         state.Keyboard(1, 0x21, 0, 123_000_000);
         InputSnapshot snapshot = state.Snapshot;
         InputHistoryEntry entry = Assert.Single(snapshot.History);
-        Assert.Equal(new TimerVisual(123, 1), entry.TimerAt(124_239_999, snapshot.Frequency));
+        TimerVisual timer = entry.TimerAt(124_239_999, snapshot.Frequency);
+        Assert.Equal(123, timer.Milliseconds);
+        Assert.Equal(123.9999, timer.ElapsedMilliseconds, precision: 6);
+        Assert.Equal(8.439994, timer.EstimatedFramesAt60, precision: 6);
         Assert.Equal(new TimerVisual(0, 1), entry.TimerAt(122_999_999, snapshot.Frequency));
         Assert.False(snapshot.IsAnimating(129_500_000));
+    }
+
+    [Theory]
+    [InlineData(0, 0, 1)]
+    [InlineData(166_666, 16, 1.999996)]
+    [InlineData(166_667, 16, 2.000002)]
+    [InlineData(1_239_999, 123, 8.439994)]
+    [InlineData(5_000_001, 500, 31)]
+    public void EstimatedFramesPreserveSubMillisecondTiming(long ticks, int milliseconds, double frames)
+    {
+        var entry = new InputHistoryEntry(0x21, 10_000_000);
+        TimerVisual timer = entry.TimerAt(10_000_000 + ticks, 10_000_000);
+        Assert.Equal(milliseconds, timer.Milliseconds);
+        Assert.Equal(frames, timer.EstimatedFramesAt60, precision: 6);
     }
 }

@@ -84,9 +84,11 @@ restore the overlay in the same position without switching away from your game.
 
 ## Read the input history
 
-The newest press appears at the top, with up to 10 entries visible. Each row shows the time since that press in milliseconds and a frame count at 60 fps (`f@60`) that starts at 1 for a new press. This is a timing reference, not a measurement of your game's frame rate.
+The newest press appears at the top, with up to 10 entries visible. Each row shows the time since the app received that press in milliseconds and an approximate 60 fps time equivalent (`~f@60`). The equivalent starts at 1 for a new press: 100 ms corresponds to `~7 f@60`, or six elapsed 60 fps frame intervals.
 
-Timers stop at `500+ ms` / `31+ f@60` and dim, but entries stay visible until newer presses replace them. Releasing a button does not add a row. Controller stick movement and changes in trigger pressure do not add rows either; trigger button presses do.
+The frame equivalent uses the full timestamp precision, while the millisecond display truncates fractions. Neither value counts game or recording frames. On the primary display, animation redraws follow Windows desktop composition timing when it is available; other displays use a steady clock at their reported refresh rate. Redraws still run independently of the game and recorder, so a recorded timer can be older than the game image beside it. For animation or parry frame counts, step through the game footage.
+
+Timers stop at `500+ ms` / `~31+ f@60` and dim, but entries stay visible until newer presses replace them. Releasing a button does not add a row. Controller stick movement and changes in trigger pressure do not add rows either; trigger button presses do.
 
 ## Controller notes
 

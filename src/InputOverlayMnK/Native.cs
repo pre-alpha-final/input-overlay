@@ -96,6 +96,18 @@ internal static class Native
     internal static extern nint CreateDC(string driver, string device, string? output, nint initData);
     [DllImport("gdi32.dll")]
     internal static extern int GetDeviceCaps(nint dc, int index);
+    // DWM_TIMING_INFO is packed to one byte; the unused trailing statistics
+    // are still included in Size so DWM receives its complete 292-byte structure.
+    [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 292)]
+    internal struct CompositionTiming
+    {
+        [FieldOffset(0)] public uint Size;
+        [FieldOffset(12)] public ulong RefreshPeriod;
+        [FieldOffset(28)] public ulong VBlank;
+    }
+    [DllImport("dwmapi.dll")]
+    internal static extern int DwmGetCompositionTimingInfo(nint window, ref CompositionTiming timing);
+
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     internal static extern nint CreateWaitableTimerEx(nint attributes, string? name, uint flags, uint access);
     [DllImport("kernel32.dll", SetLastError = true)]

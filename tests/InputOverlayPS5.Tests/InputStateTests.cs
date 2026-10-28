@@ -199,7 +199,7 @@ public sealed class InputStateTests
         TimerVisual timer = entry.TimerAt(1000 + elapsed, 1000);
         Assert.Equal(milliseconds, timer.Milliseconds);
         Assert.Equal(opacity, timer.Opacity, 5);
-        Assert.Equal(frames, timer.FramesAt60, 5);
+        Assert.Equal(frames, timer.EstimatedFramesAt60, 5);
     }
 
     [Fact]
@@ -213,5 +213,19 @@ public sealed class InputStateTests
         Assert.Equal(new TimerVisual(320, 1), state.Snapshot.History[1].TimerAt(320, 1000));
         Assert.False(state.Snapshot.IsAnimating(950));
         Assert.Equal(2, state.Snapshot.History.Length);
+    }
+
+    [Theory]
+    [InlineData(0, 0, 1)]
+    [InlineData(166_666, 16, 1.999996)]
+    [InlineData(166_667, 16, 2.000002)]
+    [InlineData(1_239_999, 123, 8.439994)]
+    [InlineData(5_000_001, 500, 31)]
+    public void EstimatedFramesPreserveSubMillisecondTiming(long ticks, int milliseconds, double frames)
+    {
+        var entry = new InputHistoryEntry(ControllerButtons.Cross, 10_000_000);
+        TimerVisual timer = entry.TimerAt(10_000_000 + ticks, 10_000_000);
+        Assert.Equal(milliseconds, timer.Milliseconds);
+        Assert.Equal(frames, timer.EstimatedFramesAt60, precision: 6);
     }
 }

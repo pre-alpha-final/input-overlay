@@ -129,7 +129,7 @@ internal sealed class OverlayRenderer : IDisposable
             graphics.DrawString(InputCodes.Label(entry.Code), _label, label, new RectangleF(389, y, 84, 20), _historyLabel);
             string value = timer.Milliseconds == 500 ? "500+ ms" : $"{timer.Milliseconds} ms";
             graphics.DrawString(value, _timer, time, new RectangleF(474, y, 76, 20), _historyTimer);
-            string frames = $"{timer.FramesAt60:0.##}{(timer.Milliseconds == 500 ? "+" : "")} f@60";
+            string frames = $"~{timer.EstimatedFramesAt60:0.##}{(timer.Milliseconds == 500 ? "+" : "")} f@60";
             graphics.DrawString(frames, _timer, time, new RectangleF(560, y, 102, 20), _historyTimer);
         }
     }

@@ -2,10 +2,12 @@ using System.Collections.Immutable;
 
 namespace InputOverlayMnK.Input;
 
-internal readonly record struct TimerVisual(int Milliseconds, float Opacity)
+internal readonly record struct TimerVisual(double ElapsedMilliseconds, float Opacity)
 {
     public bool Visible => Opacity > 0;
-    public double FramesAt60 => 1 + Milliseconds / (1000d / 60);
+    public int Milliseconds => (int)ElapsedMilliseconds;
+    // One-based time equivalent only; no game or recording frame counter is available.
+    public double EstimatedFramesAt60 => 1 + ElapsedMilliseconds / (1000d / 60);
 }
 
 internal readonly record struct InputHistoryEntry(int Code, long Timestamp)
@@ -15,7 +17,7 @@ internal readonly record struct InputHistoryEntry(int Code, long Timestamp)
         double elapsed = Math.Max(0, (now - Timestamp) * 1000d / frequency);
         // Completed timers remain readable until the entry leaves the history.
         float opacity = elapsed <= 500 ? 1 : (float)(1 - Math.Min(150, elapsed - 500) / 300);
-        return new((int)Math.Min(500, elapsed), opacity);
+        return new(Math.Min(500, elapsed), opacity);
     }
 }
 

@@ -18,6 +18,7 @@ internal sealed class OverlayWindow : Form
     private nint _windowHandle;
     private int _renderQueued, _visible;
     private int _refreshRate = 60;
+    private bool _primaryDisplay;
     private bool _configuring, _sessionRegistered, _resourcesDisposed;
     private string? _monitorName;
     private Exception? _initializationError;
@@ -118,6 +119,7 @@ internal sealed class OverlayWindow : Form
             _surface = surface;
             _renderer = renderer;
             _refreshRate = DisplayInfo.RefreshRate(screen);
+            _primaryDisplay = screen.Primary;
             if (!Native.SetWindowPos(Handle, -1, location.X, location.Y, width, height, 0x0010 | 0x0200))
                 throw new Win32Exception(Marshal.GetLastWin32Error(), "Could not position overlay.");
             RequestRender();
@@ -146,7 +148,7 @@ internal sealed class OverlayWindow : Form
         _renderer.Draw(snapshot, now);
         _surface.Submit(Handle, Location);
         _diagnostics.Submitted(snapshot);
-        _clock?.SetActive(snapshot.IsAnimating(now), _refreshRate);
+        _clock?.SetActive(snapshot.IsAnimating(now), _refreshRate, _primaryDisplay);
     }
 
     protected override void WndProc(ref Message message)
@@ -167,7 +169,7 @@ internal sealed class OverlayWindow : Form
                     }
                     else
                     {
-                        _clock?.SetActive(false, _refreshRate);
+                        _clock?.SetActive(false, _refreshRate, _primaryDisplay);
                         // OBS skips minimized windows; hiding alone leaves its last captured frame visible.
                         WindowState = FormWindowState.Minimized;
                         Hide();

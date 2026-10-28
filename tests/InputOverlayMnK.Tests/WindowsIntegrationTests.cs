@@ -31,6 +31,9 @@ public sealed class WindowsIntegrationTests(ITestOutputHelper output)
     public void NativeInputStructuresMatchWindowsX64Abi()
     {
         Assert.Equal(8, IntPtr.Size);
+        Assert.Equal(292, Marshal.SizeOf<Native.CompositionTiming>());
+        Assert.Equal(12, Marshal.OffsetOf<Native.CompositionTiming>(nameof(Native.CompositionTiming.RefreshPeriod)).ToInt32());
+        Assert.Equal(28, Marshal.OffsetOf<Native.CompositionTiming>(nameof(Native.CompositionTiming.VBlank)).ToInt32());
         Assert.Equal(24, Marshal.SizeOf<Native.RawHeader>());
         Assert.Equal(16, Marshal.SizeOf<Native.RawKeyboard>());
         Assert.Equal(24, Marshal.SizeOf<Native.RawMouse>());

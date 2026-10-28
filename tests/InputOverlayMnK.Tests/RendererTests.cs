@@ -85,7 +85,7 @@ public sealed class RendererTests
             Assert.Equal(previous, surface.Bitmap.GetPixel(x, y + 22).ToArgb());
             newestDiffers |= previous != surface.Bitmap.GetPixel(x, y).ToArgb();
         }
-        Assert.True(newestDiffers, "The new row should read 0 ms and 1 f@60 while the previous row reads 20 ms and 2.2 f@60.");
+        Assert.True(newestDiffers, "The new row should read 0 ms and ~1 f@60 while the previous row reads 20 ms and ~2.2 f@60.");
     }
 
     [Fact]
